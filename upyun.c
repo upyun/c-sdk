@@ -464,15 +464,15 @@ static upyun_ret_e upyun_request_internal(upyun_t* thiz,
     {
         curl_easy_setopt(curl, CURLOPT_INFILESIZE_LARGE,
                 (curl_off_t)(request->upload_content->len));
-        sprintf(buf, "Content-Length: %zu", request->upload_content->len);
+        /*sprintf(buf, "Content-Length: %zu", request->upload_content->len);*/
     }
     else
     {
         curl_easy_setopt(curl, CURLOPT_INFILESIZE_LARGE,
                 (curl_off_t) 0);
         strcpy(buf, "Content-Length: 0");
+        curl_headers = curl_slist_append(curl_headers, buf);
     }
-    curl_headers = curl_slist_append(curl_headers, buf);
 
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, curl_headers);
 

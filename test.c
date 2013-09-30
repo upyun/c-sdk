@@ -299,6 +299,11 @@ void test(test_ctx_t *ctx)
     printf("test upload......................................\n");
     test_upload(ctx);
     printf("test download....................................\n");
+    if(access("./output", F_OK) <  0)
+    {
+        mkdir("./output", 0777);
+    }
+
     test_download(ctx);
     printf("test readdir.....................................\n");
     test_readdir(ctx);
