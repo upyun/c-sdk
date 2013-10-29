@@ -16,18 +16,18 @@ STLIB_MAKE_CMD=ar rcs $(STLIBNAME)
 all: $(DYLIBNAME)
 
 $(DYLIBNAME): $(OBJ)
-	$(DYLIB_MAKE_CMD) $(OBJ)
+	$(DYLIB_MAKE_CMD) $(OBJ) 
 
 $(STLIBNAME): $(OBJ)
-	$(STLIB_MAKE_CMD) $(OBJ)
+	$(STLIB_MAKE_CMD) $(OBJ) 
 
 dynamic: $(DYLIBNAME)
 static: $(STLIBNAME)
 
 test: $(TESTS)
 
-$(TESTS): test.o $(STLIBNAME)
-	$(CC) -o $(TESTS) $(REAL_CFLAGS) $< -I. -lcurl $(STLIBNAME)
+$(TESTS): test.o $(STLIBNAME) 
+	$(CC) -o $(TESTS) $(REAL_CFLAGS) $< -I. $(STLIBNAME) -lcurl
 
 md5.o: md5.h md5.c
 upyun.o: upyun.h upyun.c

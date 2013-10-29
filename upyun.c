@@ -18,13 +18,13 @@
 
 int s_inited = 0;
 
-typedef struct upyun_s
+struct upyun_s
 {
     const upyun_config_t* config;
     int timeout;
     CURL *curl;
 
-}upyun_t;
+};
 
 typedef struct upyun_readdir_ctx_s
 {
