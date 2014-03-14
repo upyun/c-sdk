@@ -39,4 +39,4 @@ test.o: upyun.h test.c
 .PHONY: all test clean
 
 clean:
-	$(RM) *.o $(DYLIBNAME) $(STLIBNAME) $(TESTS) output/* -rf
+	$(RM) -rf *.o $(DYLIBNAME) $(STLIBNAME) $(TESTS) output/*

@@ -227,7 +227,7 @@ static void get_rfc1123_date(char* out, int len)
 static void upyun_generate_auth_header(const char* user, const char* passwd,
                                        upyun_http_method_e method,
                                        size_t content_len, const char* uri,
-                                       char* out)
+                                       char* out, const char* time_buf)
 {
     /* md5(METHOD & URI & DATE & CONTENT_LENGTH & md5(PASSWORD)) */
 
@@ -235,11 +235,7 @@ static void upyun_generate_auth_header(const char* user, const char* passwd,
     int size = 0;
     size += sprintf(buf + size, "%s&", upyun_http_methods[method]);
     size += sprintf(buf + size, "%s&", uri);
-
-    char time_buf[100] = {0};
-    get_rfc1123_date(time_buf, 100);
     size += sprintf(buf + size, "%s&", time_buf);
-
     size += sprintf(buf + size, "%zu&", content_len);
     upyun_md5(passwd, strlen(passwd), buf + size);
     size += 32;
@@ -447,17 +443,19 @@ static upyun_ret_e upyun_request_internal(upyun_t* thiz,
             ? request->upload_content->len : 0;
     }
 
+    char time_buf[MAX_BUF_LEN] = {0};
+    get_rfc1123_date(time_buf, 100);
     char auth_header[MAX_BUF_LEN] = {0};
     upyun_generate_auth_header(thiz->config->user, thiz->config->passwd,
-            request->method, content_len, quoted_uri, auth_header);
+            request->method, content_len, quoted_uri, auth_header, time_buf);
 
     curl_headers = curl_slist_append(curl_headers, auth_header);
     curl_headers = curl_slist_append(curl_headers,
             upyun_endpoints[thiz->config->endpoint]);
 
     char buf[MAX_BUF_LEN] = {0};
-    strcpy(buf, "DATE: ");
-    get_rfc1123_date(buf + sizeof("DATE: ") - 1, 100);
+    snprintf(buf, MAX_BUF_LEN, "DATE: %s", time_buf);
+
     curl_headers = curl_slist_append(curl_headers, buf);
 
     if(request->upload_content)
