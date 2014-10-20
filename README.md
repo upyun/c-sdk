@@ -6,17 +6,17 @@
 
 ###安装
 ```
-make 
+make
 make test
 ```
 
 ### 操作接口说明
 #### upyun 生命周期
 ```
-upyun_global_init ==> 
-upyun_create ==> 
-upyun_upload_file/upload_download_file/... ==> 
-upyun_destroy ==> 
+upyun_global_init ==>
+upyun_create ==>
+upyun_upload_file/upload_download_file/... ==>
+upyun_destroy ==>
 upyun_global_cleanup
 ```
 
@@ -68,8 +68,8 @@ upyun_config_t指定了该新创建实例的一些配置信息，其中包括：
 #### 上传文件
 ##### 函数原型
 ```
-upyun_ret_e upyun_upload_file(upyun_t* thiz, const char* path, 
-const upyun_content_t* content, const upyun_gmkerl_t* gmkerl, 
+upyun_ret_e upyun_upload_file(upyun_t* thiz, const char* path,
+const upyun_content_t* content, const upyun_gmkerl_t* gmkerl,
 upyun_upload_info_t* info, int* http_status);
 ```
 
@@ -79,10 +79,11 @@ upyun_content_t content = {0};
 content.type = UPYUN_CONTENT_FILE;
 content.u.fp = fopen("1.jpg", "rb");
 content.len = file_size("1.jpg");
+content.md5 = 1;
 
 upyun_upload_info_t upload_info = {0};
 int status = 0;
-ret = upyun_upload_file(u, "/pengwu-img/1.jpg", &content, NULL, &upload_info, &status); 
+ret = upyun_upload_file(u, "/pengwu-img/1.jpg", &content, NULL, &upload_info, &status);
 fclose(conten.u.fp);
 ```
 
@@ -91,6 +92,7 @@ fclose(conten.u.fp);
 * *content* 指定上传内容，包含以下字段：
   * *content.len* 指定上传内容的长度，值必须大于0
   * *content.type* 指定上传内容的类型，目前只支持FILE*和char*两种类型，分别从文件和内存中读取内容。
+  * *content.md5* 当为1时，会对上传内容生成 *Content-MD5* http 头校验码
 * *gmkerl* 作图参数，传值为NULL时则表示只是单纯上传文件。具体填值请参考 [这里](http://wiki.upyun.com/index.php?title=HTTP_REST_API%E6%8E%A5%E5%8F%A3#.E5.9B.BE.E7.89.87.E5.A4.84.E7.90.86.E6.8E.A5.E5.8F.A3)
 * *info* 若传入的*info*不为NULL，则在图片文件成功上传后，sdk内部会修改*info*字段值。
 * *status* 服务器的响应http状态码。
@@ -101,13 +103,13 @@ fclose(conten.u.fp);
 #### 下载文件
 ##### 函数原型
 ```
-upyun_ret_e upyun_download_file(upyun_t* thiz, const char* path, 
+upyun_ret_e upyun_download_file(upyun_t* thiz, const char* path,
         UPYUN_CONTENT_CALLBACK callback, void* user_data, int* http_status);
 ```
 
 ##### 调用演示
 ```
-size_t write_data(void *ptr, size_t size, size_t nmemb, void *stream)  
+size_t write_data(void *ptr, size_t size, size_t nmemb, void *stream)
 {
         int written = fwrite(ptr, size, nmemb, (FILE *)stream);
         return written;
@@ -123,7 +125,7 @@ ret = upyun_download_file(u, "/pengwu-img/1.jpg", (UPYUN_CONTENT_CALLBACK)write_
 assert(ret == UPYUN_RET_OK && status == 200);
 ```
 
-#### 读取目录文件信息 
+#### 读取目录文件信息
 ##### 函数原型
 ```
 upyun_ret_e upyun_read_dir(upyun_t* thiz, const char* path, upyun_dir_item_t** result, int* http_status);
@@ -139,7 +141,7 @@ assert(ret == UPYUN_RET_OK && status == 200);
 upyun_dir_item_t* s_item = item;
 for(; item!=NULL; item=item->next)
 {
-    printf("dir item: name %s, type %d, size %d date %d\n", 
+    printf("dir item: name %s, type %d, size %d date %d\n",
             item->file_name, item->file_type, item->file_size, item->date);
 }
 upyun_dir_items_free(s_item);
@@ -165,7 +167,7 @@ printf("file size: %d, file type: %s, file date: %d\n", info.size, info.type, in
 ##### 说明
 入口参数*info*若不为NULL，则在服务器成功返回后，sdk内部会将文件信息填入info。
 
-#### 创建目录 
+#### 创建目录
 ##### 函数原型
 ```
 upyun_ret_e upyun_make_dir(upyun_t* thiz, const char* path, int automkdir, int* http_status);
@@ -174,7 +176,7 @@ upyun_ret_e upyun_make_dir(upyun_t* thiz, const char* path, int automkdir, int* 
 ##### 调用演示
 ```
 sprintf(path, "/pengwu-img/%s/", path);
-ret = upyun_make_dir(thiz, path, 0, &status); 
+ret = upyun_make_dir(thiz, path, 0, &status);
 assert(ret == UPYUN_RET_OK && status == 200);
 ```
 
