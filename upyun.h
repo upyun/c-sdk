@@ -120,6 +120,8 @@ typedef struct upyun_content_s
 {
     upyun_content_type_e type;
     size_t len;
+    int md5;
+
     union
     {
         FILE* fp;

@@ -16,14 +16,13 @@
 #define MAX_BUF_LEN 1024
 #define MAX_QUOTED_URL_LEN 1024 * 3 + 1
 
-int s_inited = 0;
+static int s_inited = 0;
 
 struct upyun_s
 {
     const upyun_config_t* config;
     int timeout;
     CURL *curl;
-
 };
 
 typedef struct upyun_readdir_ctx_s
@@ -58,6 +57,26 @@ const char* upyun_http_methods[] =
     "PUT",
     "DELETE"
 };
+
+static const char* DAYS_OF_WEEK[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+static const char* MONTHS_OF_YEAR[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+
+static void strtime(char* out, size_t len)
+{
+    time_t t = time(NULL);
+    struct tm now_tm = {0};
+    gmtime_r(&t, &now_tm);
+
+    snprintf(out, len, "%s, %02d %s %04d %02d:%02d:%02d GMT",
+            DAYS_OF_WEEK[now_tm.tm_wday],
+            now_tm.tm_mday,
+            MONTHS_OF_YEAR[now_tm.tm_mon],
+            now_tm.tm_year + 1900,
+            now_tm.tm_hour,
+            now_tm.tm_min,
+            now_tm.tm_sec);
+    return;
+}
 
 static char* get_token(char** line, const char* delim, char* end_ptr)
 {
@@ -212,14 +231,17 @@ static void upyun_md5(const char* in, int in_len, char* out)
 
     return;
 }
+
 static void get_rfc1123_date(char* out, int len)
 {
-    time_t t = time(NULL);
+   /*there is a locale problem in strftime.*/
+   /*time_t t = time(NULL);
     struct tm p;
 
     gmtime_r(&t, &p);
-    /* Thu, 29 Aug 2013 05:24:17 GMT */
-    strftime(out, len, "%a, %d %b %Y %T GMT", &p);
+    strftime(out, len, "%a, %d %b %Y %T GMT", &p);*/
+   /* Thu, 29 Aug 2013 05:24:17 GMT */
+   strtime(out, len);
 
     return;
 }
@@ -344,6 +366,67 @@ static size_t upyun_usage_content_callback(char *ptr, size_t size, size_t nmemb,
     return size * nmemb;
 }
 
+static int upyun_content_md5(const upyun_content_t* c, char* out_md5)
+{
+    MD5_CTX md5;
+    MD5Init(&md5);
+    unsigned char decrypt[16] = {0};
+    int ret = 1;
+
+    size_t len = c->len;
+    char content_buf[8192] = {0};
+    if(c->type == UPYUN_CONTENT_FILE)
+    {
+        while(len > 0)
+        {
+            size_t chunk_len = len >= 8192 ? 8192 : len;
+            size_t nread = fread(content_buf, 1, chunk_len, c->u.fp);
+            if(nread == 0)
+            {
+                int ferr = ferror(c->u.fp);
+                if(ferr > 0)
+                {
+                    fprintf(stderr, "sdk read file failed, errno: %d\n", ferr);
+                }
+                else if(feof(c->u.fp))
+                {
+                    fprintf(stderr, "sdk read file failed, "
+                            "expect file len: %d, got %d\n", c->len, c->len - len);
+                }
+
+                ret = 0;
+                break;
+            }
+
+            len -= nread;
+            MD5Update(&md5, (unsigned char *)content_buf, nread);
+        }
+
+        fseek(c->u.fp, 0, SEEK_SET);
+    }
+    else
+    {
+        MD5Update(&md5, (unsigned char *)c->u.data, c->len);
+    }
+
+    if(ret == 0) return 0;
+
+    MD5Final(&md5, decrypt);
+
+    unsigned char * pcur = decrypt;
+    const char * hex = "0123456789abcdef";
+    char* pout = out_md5;
+    int i = 0;
+    for(; i < 16; ++i)
+    {
+        *pout++ = hex[(*pcur>>4)&0xF];
+        *pout++ = hex[(*pcur)&0xF];
+        pcur++;
+    }
+
+    return ret;
+}
+
 static upyun_ret_e upyun_request_internal(upyun_t* thiz,
                                           upyun_request_t* request,
                                           struct curl_slist** headers)
@@ -463,6 +546,13 @@ static upyun_ret_e upyun_request_internal(upyun_t* thiz,
         curl_easy_setopt(curl, CURLOPT_INFILESIZE_LARGE,
                 (curl_off_t)(request->upload_content->len));
         /*sprintf(buf, "Content-Length: %zu", request->upload_content->len);*/
+        if(request->upload_content->md5)
+        {
+            char md5_buf[32] = {0};
+            if(upyun_content_md5(request->upload_content, md5_buf) == 0) goto DONE;
+            sprintf(buf, "Content-MD5: %s", md5_buf);
+            curl_slist_append(curl_headers, buf);
+        }
     }
     else
     {
@@ -492,7 +582,7 @@ static upyun_ret_e upyun_request_internal(upyun_t* thiz,
     CURLcode rv = curl_easy_perform(curl);
     if(rv != CURLE_OK) ret = UPYUN_RET_HTTP_FAIL;
 
-    curl_easy_getinfo (curl, CURLINFO_RESPONSE_CODE, &request->status);
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &request->status);
 DONE:
     *headers = curl_headers;
 
@@ -570,7 +660,7 @@ upyun_t* upyun_create(const upyun_config_t* config)
     thiz->config = config;
     thiz->timeout = -1;
     thiz->curl = curl_easy_init();
-    if(thiz->curl == NULL) 
+    if(thiz->curl == NULL)
     {
         free(thiz);
 

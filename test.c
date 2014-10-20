@@ -121,6 +121,7 @@ void test_upload(test_ctx_t* ctx)
             content.type = UPYUN_CONTENT_FILE;
             content.u.fp = fopen(path, "rb");
             content.len = file->size;
+            content.md5 = 1;
 
             sprintf(path, PREFIX_PATH"%s", file->path);
             ret = upyun_upload_file(thiz, path, &content, NULL, NULL, &status);
