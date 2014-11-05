@@ -1,4 +1,7 @@
 # 又拍云 C SDK
+
+[![Build Status](https://travis-ci.org/upyun/c-sdk.svg?branch=master)](https://travis-ci.org/upyun/c-sdk)
+
 又拍云存储 C SDK，基于 [又拍云存储 HTTP REST API 接口](http://wiki.upyun.com/index.php?title=HTTP_REST_API%E6%8E%A5%E5%8F%A3) 开发。
 
 
