@@ -4,7 +4,7 @@ LIBNAME=libupyun
 
 CC=gcc
 OPTIMIZATION?=-O2
-WARNINGS=-Wall -Wno-missing-field-initializers
+WARNINGS=-Wno-missing-field-initializers
 DEBUG?= -g -ggdb
 REAL_CFLAGS=$(OPTIMIZATION) -fPIC $(CFLAGS) $(WARNINGS) $(DEBUG)
 

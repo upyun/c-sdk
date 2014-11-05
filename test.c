@@ -4,12 +4,10 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <stdlib.h>
 
 #include "upyun.h"
 
-//#define UPYUNCONF_BUCKET "bucketname"
-//#define UPYUNCONF_USER "username"
-//#define UPYUNCONF_PASS "password"
 char* UPYUNCONF_BUCKET   = NULL;
 char* UPYUNCONF_USER = NULL;
 char* UPYUNCONF_PASS = NULL;
@@ -325,6 +323,8 @@ void test(test_ctx_t *ctx)
     upyun_read_dir(thiz, PREFIX_PATH, &item, &status);
     assert(ret == UPYUN_RET_OK && status == 200);
     assert(item == NULL);
+
+    upyun_remove_file(thiz, PREFIX_PATH, &status);
 }
 
 int main(void)
@@ -332,8 +332,23 @@ int main(void)
     UPYUNCONF_USER = getenv("UPYUN_USERNAME");
     UPYUNCONF_PASS = getenv("UPYUN_PASSWORD");
     UPYUNCONF_BUCKET = getenv("UPYUN_BUCKET");
+
+    if(UPYUNCONF_USER == NULL
+            || UPYUNCONF_BUCKET == NULL
+            || UPYUNCONF_PASS == NULL
+            || strlen(UPYUNCONF_USER) == 0
+            || strlen(UPYUNCONF_BUCKET) == 0
+            || strlen(UPYUNCONF_PASS) == 0)
+
+    {
+        printf("user or bucket or password null\n");
+        exit(EXIT_FAILURE);
+    }
+
     UPYUNCONF_DEBUG = getenv("UPYUN_DEBUG");
-    sprintf(PREFIX_PATH, "/%s/", UPYUNCONF_BUCKET);
+    char template[100] = "test_XXXXXX";
+    sprintf(PREFIX_PATH, "/%s/%s/", UPYUNCONF_BUCKET, mktemp(template));
+    printf("%s\n", PREFIX_PATH);
 
     upyun_global_init();
     upyun_config_t conf = {0};
