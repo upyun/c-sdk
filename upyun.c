@@ -548,7 +548,7 @@ static upyun_ret_e upyun_request_internal(upyun_t* thiz,
         /*sprintf(buf, "Content-Length: %zu", request->upload_content->len);*/
         if(request->upload_content->md5)
         {
-            char md5_buf[32] = {0};
+            char md5_buf[34] = {0};
             if(upyun_content_md5(request->upload_content, md5_buf) == 0) goto DONE;
             sprintf(buf, "Content-MD5: %s", md5_buf);
             curl_slist_append(curl_headers, buf);
