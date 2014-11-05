@@ -25,6 +25,7 @@ dynamic: $(DYLIBNAME)
 static: $(STLIBNAME)
 
 test: $(TESTS)
+	./upyun-test
 
 $(TESTS): test.o $(STLIBNAME)
 	$(CC) -o $(TESTS) $(REAL_CFLAGS) $< -I. $(STLIBNAME) -lcurl

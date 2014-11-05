@@ -7,11 +7,15 @@
 
 #include "upyun.h"
 
-#define DEFAULT_BUCKET "bucketname"
-#define UPYUNCONF_USER "username"
-#define UPYUNCONF_PASS "password"
+//#define UPYUNCONF_BUCKET "bucketname"
+//#define UPYUNCONF_USER "username"
+//#define UPYUNCONF_PASS "password"
+char* UPYUNCONF_BUCKET   = NULL;
+char* UPYUNCONF_USER = NULL;
+char* UPYUNCONF_PASS = NULL;
+char* UPYUNCONF_DEBUG = NULL;
 
-#define PREFIX_PATH "/"DEFAULT_BUCKET"/"
+char PREFIX_PATH[200];
 
 typedef struct local_file_s {
     long size;
@@ -107,7 +111,7 @@ void test_upload(test_ctx_t* ctx)
     {
         if(file->type == 'F')
         {
-            sprintf(path, PREFIX_PATH"%s", file->path);
+            sprintf(path, "%s%s", PREFIX_PATH, file->path);
             /* get the file_info check. */
             ret = upyun_get_fileinfo(thiz, path, NULL, &status);
             if(status == 200)
@@ -123,7 +127,7 @@ void test_upload(test_ctx_t* ctx)
             content.len = file->size;
             content.md5 = 1;
 
-            sprintf(path, PREFIX_PATH"%s", file->path);
+            sprintf(path, "%s%s", PREFIX_PATH, file->path);
             ret = upyun_upload_file(thiz, path, &content, NULL, NULL, &status);
             fclose(content.u.fp);
             assert(ret == UPYUN_RET_OK && status == 200);
@@ -137,7 +141,7 @@ void test_upload(test_ctx_t* ctx)
         else if(file->type == 'D')
         {
             /* make directory. */
-            sprintf(path, PREFIX_PATH"%s/", file->path);
+            sprintf(path, "%s%s/", PREFIX_PATH, file->path);
             ret = upyun_make_dir(thiz, path, 0, &status);
             assert(ret == UPYUN_RET_OK && status == 200);
 
@@ -167,7 +171,7 @@ void test_download(test_ctx_t* ctx)
     {
         if(file->type == 'F')
         {
-            sprintf(path, PREFIX_PATH"%s", file->path);
+            sprintf(path, "%s%s", PREFIX_PATH, file->path);
 
             sprintf(path_download, "output/%s", file->path);
             FILE* fp = NULL;
@@ -196,7 +200,7 @@ void test_download(test_ctx_t* ctx)
     }
 }
 
-void test_delete(test_ctx_t* ctx)
+void test_delete(test_ctx_t* ctx, int assert)
 {
     char path[4096] = {0};
     upyun_ret_e ret = UPYUN_RET_OK;
@@ -207,7 +211,7 @@ void test_delete(test_ctx_t* ctx)
     {
         if(file->type == 'F')
         {
-            sprintf(path, PREFIX_PATH"%s", file->path);
+            sprintf(path, "%s%s", PREFIX_PATH, file->path);
             ret = upyun_get_fileinfo(thiz, path, NULL, &status);
             if(status == 404)
             {
@@ -215,19 +219,19 @@ void test_delete(test_ctx_t* ctx)
             }
 
             ret = upyun_remove_file(thiz, path, &status);
-            assert(ret == UPYUN_RET_OK && status == 200);
+            if(assert) assert(ret == UPYUN_RET_OK && status == 200);
         }
         else if(file->type == 'D')
         {
             local_file_t* old_parent = ctx->parent;
             ctx->parent = file;
-            test_delete(ctx);
+            test_delete(ctx, assert);
             ctx->parent = old_parent;
 
-            sprintf(path, PREFIX_PATH"%s/", file->path);
+            sprintf(path, "%s%s/", PREFIX_PATH, file->path);
 
             ret = upyun_remove_file(thiz, path, &status);
-            assert(ret == UPYUN_RET_OK && status == 200);
+            if(assert) assert(ret == UPYUN_RET_OK && status == 200);
         }
     }
 }
@@ -247,10 +251,11 @@ static void list_dir(test_ctx_t* ctx)
 
     while((ent=readdir(pDir))!=NULL)
     {
+        if(strcmp(ent->d_name,".")==0 || strcmp(ent->d_name,"..")==0)
+            continue;
+
         if(ent->d_type & DT_DIR)
         {
-            if(strcmp(ent->d_name,".")==0 || strcmp(ent->d_name,"..")==0)
-                continue;
 
             local_file_t* new_file = new_file_info(ctx, ent->d_name, 'D');
             local_file_t* old_parent = ctx->parent;
@@ -297,6 +302,9 @@ void test(test_ctx_t *ctx)
     list_dir(ctx);
     ctx->parent = ctx->root;
     display_dir(ctx);
+
+    test_delete(ctx, 0);
+
     printf("test upload......................................\n");
     test_upload(ctx);
     printf("test download....................................\n");
@@ -309,7 +317,7 @@ void test(test_ctx_t *ctx)
     printf("test readdir.....................................\n");
     test_readdir(ctx);
     printf("test delete......................................\n");
-    test_delete(ctx);
+    test_delete(ctx, 1);
 
     upyun_ret_e ret = UPYUN_RET_OK;
     int status = 0;
@@ -321,12 +329,18 @@ void test(test_ctx_t *ctx)
 
 int main(void)
 {
+    UPYUNCONF_USER = getenv("UPYUN_USERNAME");
+    UPYUNCONF_PASS = getenv("UPYUN_PASSWORD");
+    UPYUNCONF_BUCKET = getenv("UPYUN_BUCKET");
+    UPYUNCONF_DEBUG = getenv("UPYUN_DEBUG");
+    sprintf(PREFIX_PATH, "/%s/", UPYUNCONF_BUCKET);
+
     upyun_global_init();
     upyun_config_t conf = {0};
     conf.user = UPYUNCONF_USER;
     conf.passwd = UPYUNCONF_PASS;
     conf.endpoint = UPYUN_ED_AUTO;
-    conf.debug = 1;
+    conf.debug = UPYUNCONF_DEBUG == NULL ? 0 : 1;
 
     upyun_t *u = upyun_create(&conf);
 
