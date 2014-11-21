@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/upyun/c-sdk.svg?branch=master)](https://travis-ci.org/upyun/c-sdk)
 
-又拍云存储 C SDK，基于 [又拍云存储 HTTP REST API 接口](http://wiki.upyun.com/index.php?title=HTTP_REST_API%E6%8E%A5%E5%8F%A3) 开发。
+又拍云存储 C SDK，基于 [又拍云存储 HTTP REST API](http://docs.upyun.com/api/rest_api/) 开发。
 
 
 依赖: [libcurl](https://github.com/bagder/curl)
@@ -96,7 +96,7 @@ fclose(conten.u.fp);
   * *content.len* 指定上传内容的长度，值必须大于0
   * *content.type* 指定上传内容的类型，目前只支持FILE*和char*两种类型，分别从文件和内存中读取内容。
   * *content.md5* 当为1时，会对上传内容生成 *Content-MD5* http 头校验码
-* *gmkerl* 作图参数，传值为NULL时则表示只是单纯上传文件。具体填值请参考 [这里](http://wiki.upyun.com/index.php?title=HTTP_REST_API%E6%8E%A5%E5%8F%A3#.E5.9B.BE.E7.89.87.E5.A4.84.E7.90.86.E6.8E.A5.E5.8F.A3)
+* *gmkerl* 作图参数，传值为NULL时则表示只是单纯上传文件。具体填值请参考 [API 文档](http://docs.upyun.com/api/rest_api/#_4)
 * *info* 若传入的*info*不为NULL，则在图片文件成功上传后，sdk内部会修改*info*字段值。
 * *status* 服务器的响应http状态码。
 
