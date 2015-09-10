@@ -8,10 +8,10 @@
 
 #include "upyun.h"
 
-char* UPYUNCONF_BUCKET   = NULL;
-char* UPYUNCONF_USER = NULL;
-char* UPYUNCONF_PASS = NULL;
-char* UPYUNCONF_DEBUG = NULL;
+const char* UPYUNCONF_BUCKET   = NULL;
+const char* UPYUNCONF_USER = NULL;
+const char* UPYUNCONF_PASS = NULL;
+const char* UPYUNCONF_DEBUG = NULL;
 
 const char* UPYUNCONF_DEFAULT_BUCKET = "ccsdk";
 const char* UPYUNCONF_DEFAULT_USER = "ccsdk";

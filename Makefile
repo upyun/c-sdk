@@ -29,7 +29,7 @@ test: $(TESTS)
 	./upyun-test
 
 $(TESTS): test.o $(STLIBNAME)
-	$(CC) -o $(TESTS) $(REAL_CFLAGS) $< -I. $(STLIBNAME)
+	$(CC) -o $(TESTS) $(LDFLAGS) $(REAL_CFLAGS) $< -I. $(STLIBNAME)
 
 md5.o: md5.h md5.c
 upyun.o: upyun.h upyun.c

@@ -391,7 +391,7 @@ static int upyun_content_md5(const upyun_content_t* c, char* out_md5)
                 else if(feof(c->u.fp))
                 {
                     fprintf(stderr, "sdk read file failed, "
-                            "expect file len: %d, got %d\n", c->len, c->len - len);
+                            "expect file len: %zu, got %lu\n", c->len, c->len - len);
                 }
 
                 ret = 0;
@@ -700,10 +700,12 @@ upyun_ret_e upyun_request(upyun_t* thiz, upyun_request_t* request)
         const upyun_http_header_t* h = request->headers_in;
         for(; h!=NULL; h=h->next)
         {
-            /* TODO complain it. */
-            if(h->name == NULL || h->value == NULL) continue;
-            if(strlen(h->name) + sizeof(": ")-1
-                    + strlen(h->value) > MAX_BUF_LEN)continue;
+            size_t name_len = strlen(h->name);
+            size_t value_len = strlen(h->value);
+
+            if(name_len == 0 || value_len == 0) continue;
+            if(name_len + sizeof(": ") - 1
+                    + value_len > MAX_BUF_LEN)continue;
 
             snprintf(buf, MAX_BUF_LEN, "%s: %s", h->name, h->value);
             curl_headers = curl_slist_append(curl_headers, buf);
@@ -799,24 +801,25 @@ upyun_ret_e upyun_upload_file(upyun_t* thiz, const char* path,
     upyun_http_header_t* h = request.headers_out;
     for(; h!=NULL;h=h->next)
     {
+        size_t value_len = strlen(h->value);
         if(strcmp(h->name, "x-upyun-width") == 0
-                && h->value != NULL)
+                && value_len > 0)
         {
             info->width = atoi(h->value);
         }
         else if(strcmp(h->name, "x-upyun-height") == 0
-                && h->value != NULL)
+                && value_len > 0)
         {
             info->height = atoi(h->value);
         }
         else if(strcmp(h->name, "x-upyun-frames") == 0
-                && h->value != NULL)
+                && value_len > 0)
         {
             info->frames = atoi(h->value);
         }
         else if(strcmp(h->name, "x-upyun-file-type") == 0
-                && h->value != NULL
-                && strlen(h->value) < UPYUN_MAX_FILE_TYPE_LEN)
+                && value_len > 0
+                && value_len < UPYUN_MAX_FILE_TYPE_LEN)
         {
             strcpy(info->file_type, h->value);
         }
@@ -890,18 +893,20 @@ upyun_ret_e upyun_get_fileinfo(upyun_t* thiz, const char* path,
     upyun_http_header_t* h = request.headers_out;
     for(; h!=NULL; h=h->next)
     {
+        size_t value_len = strlen(h->value);
+
         if(strcmp(h->name, "x-upyun-file-type") == 0)
         {
-            if(h->value != NULL) strncpy(info->type, h->value,
+            if(value_len > 0) strncpy(info->type, h->value,
                                          UPYUN_MAX_FILE_TYPE_LEN);
         }
         else if(strcmp(h->name, "x-upyun-file-size") == 0)
         {
-            if(h->value != NULL) info->size = atoi(h->value);
+            if(value_len > 0) info->size = atoi(h->value);
         }
         else if(strcmp(h->name, "x-upyun-file-date") == 0)
         {
-            if(h->value != NULL) info->date = (time_t)atol(h->value);
+            if(value_len > 0) info->date = (time_t)atol(h->value);
         }
     }
 
