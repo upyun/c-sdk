@@ -6,11 +6,11 @@ CC=gcc
 OPTIMIZATION?=-O2
 WARNINGS=-Wno-missing-field-initializers
 DEBUG?= -g -ggdb
-REAL_CFLAGS=$(OPTIMIZATION) -fPIC $(CFLAGS) $(LDFLAGS) $(WARNINGS) $(DEBUG)
+REAL_CFLAGS=$(OPTIMIZATION) -fPIC $(CFLAGS) $(WARNINGS) $(DEBUG)
 
 LDFLAGS=-lcurl
 DYLIBNAME=$(LIBNAME).so
-DYLIB_MAKE_CMD=$(CC) -shared -o $(DYLIBNAME) $(LDFLAGS)
+DYLIB_MAKE_CMD=$(CC) $(LDFLAGS) -shared -o $(DYLIBNAME)
 STLIBNAME=$(LIBNAME).a
 STLIB_MAKE_CMD=ar rcs $(STLIBNAME)
 
@@ -29,7 +29,7 @@ test: $(TESTS)
 	./upyun-test
 
 $(TESTS): test.o $(STLIBNAME)
-	$(CC) -o $(TESTS) $(LDFLAGS) $(REAL_CFLAGS) $< -I. $(STLIBNAME)
+	$(CC) -o $(TESTS) $(REAL_CFLAGS) $< -I. $(STLIBNAME) $(LDFLAGS)
 
 md5.o: md5.h md5.c
 upyun.o: upyun.h upyun.c
