@@ -444,13 +444,13 @@ static upyun_ret_e upyun_request_internal(upyun_t* thiz,
     {
         if(content->type == UPYUN_CONTENT_FILE)
         {
-            return_val_if_fail(content->u.fp != NULL
-                    && content->len > 0, UPYUN_RET_INVALID_PARAMS);
+            return_val_if_fail(content->u.fp != NULL,
+                    UPYUN_RET_INVALID_PARAMS);
         }
         else if(content->type == UPYUN_CONTENT_STR)
         {
-            return_val_if_fail(content->u.data != NULL
-                    && content->len > 0, UPYUN_RET_INVALID_PARAMS);
+            return_val_if_fail(content->u.data != NULL,
+                    UPYUN_RET_INVALID_PARAMS);
         }
         else return UPYUN_RET_INVALID_PARAMS;
     }

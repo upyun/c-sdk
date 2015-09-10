@@ -13,6 +13,11 @@ char* UPYUNCONF_USER = NULL;
 char* UPYUNCONF_PASS = NULL;
 char* UPYUNCONF_DEBUG = NULL;
 
+const char* UPYUNCONF_DEFAULT_BUCKET = "ccsdk";
+const char* UPYUNCONF_DEFAULT_USER = "ccsdk";
+const char* UPYUNCONF_DEFAULT_PASS = "VPtR2ZwX3etuxN";
+const char* UPYUNCONF_DEFAULT_DEBUG = "true";
+
 char PREFIX_PATH[200];
 
 typedef struct local_file_s {
@@ -333,19 +338,13 @@ int main(void)
     UPYUNCONF_PASS = getenv("UPYUN_PASSWORD");
     UPYUNCONF_BUCKET = getenv("UPYUN_BUCKET");
 
-    if(UPYUNCONF_USER == NULL
-            || UPYUNCONF_BUCKET == NULL
-            || UPYUNCONF_PASS == NULL
-            || strlen(UPYUNCONF_USER) == 0
-            || strlen(UPYUNCONF_BUCKET) == 0
-            || strlen(UPYUNCONF_PASS) == 0)
-
-    {
-        printf("user or bucket or password null\n");
-        exit(EXIT_FAILURE);
-    }
+    if(UPYUNCONF_USER == NULL) UPYUNCONF_USER = UPYUNCONF_DEFAULT_USER;
+    if(UPYUNCONF_PASS == NULL) UPYUNCONF_PASS = UPYUNCONF_DEFAULT_PASS;
+    if(UPYUNCONF_BUCKET == NULL) UPYUNCONF_BUCKET = UPYUNCONF_DEFAULT_BUCKET;
 
     UPYUNCONF_DEBUG = getenv("UPYUN_DEBUG");
+    if(UPYUNCONF_DEBUG == NULL) UPYUNCONF_DEBUG = UPYUNCONF_DEFAULT_DEBUG;
+
     char template[100] = "test_XXXXXX";
     sprintf(PREFIX_PATH, "/%s/%s/", UPYUNCONF_BUCKET, mktemp(template));
     printf("%s\n", PREFIX_PATH);
@@ -355,7 +354,7 @@ int main(void)
     conf.user = UPYUNCONF_USER;
     conf.passwd = UPYUNCONF_PASS;
     conf.endpoint = UPYUN_ED_AUTO;
-    conf.debug = UPYUNCONF_DEBUG == NULL ? 0 : 1;
+    conf.debug = strcmp(UPYUNCONF_DEBUG, "true") == 0 ? 1 : 0;
 
     upyun_t *u = upyun_create(&conf);
 
